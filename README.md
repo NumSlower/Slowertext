@@ -26,7 +26,7 @@ A lightweight, Vim-like text editor written in C++ with minimal dependencies.
 ### Build
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/NumSlower/Slowertext.git
 cd slowertext
 make
 ```
