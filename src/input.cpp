@@ -288,6 +288,17 @@ void handle_quit(EditorConfig& config, Buffer& buffer, bool force = false) {
 }
 
 /**
+ * Check if a key matches a configured key binding
+ * @param key The pressed key
+ * @param binding_key The configured key binding
+ * @return True if they match
+ */
+bool key_matches_binding(int key, const std::string& binding_key) {
+    int parsed_key = ConfigManager::parse_key_binding(binding_key);
+    return key == parsed_key;
+}
+
+/**
  * Process keypress and update editor state
  * Main input processing function that delegates to specific handlers
  * @param config Editor configuration
@@ -304,47 +315,69 @@ void InputHandler::process_keypress(EditorConfig& config, Buffer& buffer) {
             return;
         }
 
-        // Parse key bindings from configuration
-        int enter_insert_key = ConfigManager::parse_key_binding(config.enter_insert);
-        int enter_command_key = ConfigManager::parse_key_binding(config.enter_command);
-        int save_file_key = ConfigManager::parse_key_binding(config.save_file);
-        int quit_editor_key = ConfigManager::parse_key_binding(config.quit_editor);
-        int force_quit_key = ConfigManager::parse_key_binding(config.force_quit);
-
-        // Debug output for key bindings
-        if (config.debug_mode && c == '\t') {
-            set_status_message("Tab pressed (9), enter_insert=" + std::to_string(enter_insert_key) + 
-                             " (" + config.enter_insert + ")");
-            return;
-        }
-
         // Handle keys based on current mode
         if (config.mode == INSERT_MODE) {
             // INSERT MODE HANDLING
             
-            if (c == enter_insert_key && c != '\t') {
-                set_status_message("Already in Insert mode");
-            } else if (c == enter_command_key) {
+            // Check for mode switching to command mode first
+            if (key_matches_binding(c, config.enter_command)) {
                 config.mode = COMMAND_MODE;
                 set_status_message("Command mode");
-            } else if (c == save_file_key) {
+                return;
+            }
+            
+            // Check for save/quit operations
+            if (key_matches_binding(c, config.save_file)) {
                 handle_save(config, buffer);
-            } else if (c == quit_editor_key) {
+                return;
+            }
+            
+            if (key_matches_binding(c, config.quit_editor)) {
                 handle_quit(config, buffer);
-            } else if (c == force_quit_key) {
+                return;
+            }
+            
+            if (key_matches_binding(c, config.force_quit)) {
                 handle_quit(config, buffer, true);
-            } else if (c == '\r' || c == '\n') {
-                handle_enter(config, buffer);
-            } else if (c == '\t') {
+                return;
+            }
+            
+            // Handle special keys with higher priority than key bindings
+            if (c == '\t') {
+                // Tab key always inserts spaces in insert mode
                 handle_tab(config, buffer);
-            } else if (c == BACKSPACE_KEY || c == 127 || c == 8 || c == CTRL_KEY('h')) {
+                return;
+            }
+            
+            if (c == '\r' || c == '\n') {
+                handle_enter(config, buffer);
+                return;
+            }
+            
+            if (c == BACKSPACE_KEY || c == 127 || c == 8 || c == CTRL_KEY('h')) {
                 handle_backspace(config, buffer);
-            } else if (c == DELETE_KEY) {
+                return;
+            }
+            
+            if (c == DELETE_KEY) {
                 handle_delete(config, buffer);
-            } else if (c == ARROW_UP || c == ARROW_DOWN || c == ARROW_LEFT || c == ARROW_RIGHT) {
+                return;
+            }
+            
+            // Handle arrow keys
+            if (c == ARROW_UP || c == ARROW_DOWN || c == ARROW_LEFT || c == ARROW_RIGHT) {
                 handle_cursor_movement(config, buffer, c);
-            } else if (c >= 32 && c <= 126) {
-                // Handle printable ASCII characters
+                return;
+            }
+            
+            // Check for insert mode key binding (but not if it conflicts with tab)
+            if (key_matches_binding(c, config.enter_insert) && c != '\t') {
+                set_status_message("Already in Insert mode");
+                return;
+            }
+            
+            // Handle printable ASCII characters
+            if (c >= 32 && c <= 126) {
                 try {
                     buffer.insert_char(config.cursor_x, config.cursor_y, static_cast<char>(c));
                     config.cursor_x++;
@@ -352,8 +385,11 @@ void InputHandler::process_keypress(EditorConfig& config, Buffer& buffer) {
                 } catch (const std::exception& e) {
                     set_status_message("Error inserting character: " + std::string(e.what()));
                 }
-            } else if (c > 126) {
-                // Handle extended ASCII/UTF-8 characters
+                return;
+            }
+            
+            // Handle extended ASCII/UTF-8 characters
+            if (c > 126) {
                 try {
                     buffer.insert_char(config.cursor_x, config.cursor_y, static_cast<char>(c));
                     config.cursor_x++;
@@ -361,28 +397,41 @@ void InputHandler::process_keypress(EditorConfig& config, Buffer& buffer) {
                 } catch (const std::exception& e) {
                     set_status_message("Error inserting extended character: " + std::string(e.what()));
                 }
-            } else {
-                // Debug message for unhandled control characters
-                if (config.debug_mode) {
-                    set_status_message("Unhandled control char: " + std::to_string(c) + 
-                                     " (0x" + std::to_string(c) + ")");
-                }
+                return;
+            }
+            
+            // Debug message for unhandled control characters
+            if (config.debug_mode) {
+                set_status_message("Unhandled control char in INSERT: " + std::to_string(c) + 
+                                 " (0x" + std::to_string(c) + ")");
             }
             
         } else if (config.mode == COMMAND_MODE) {
             // COMMAND MODE HANDLING
             
-            if (c == enter_insert_key) {
+            if (key_matches_binding(c, config.enter_insert)) {
                 config.mode = INSERT_MODE;
                 set_status_message("Insert mode");
-            } else if (c == ':') {
+                return;
+            }
+            
+            if (c == ':') {
                 in_command_input = true;
                 command_buffer = "";
-            } else if (c == quit_editor_key) {
+                return;
+            }
+            
+            if (key_matches_binding(c, config.quit_editor)) {
                 handle_quit(config, buffer);
-            } else if (c == force_quit_key) {
+                return;
+            }
+            
+            if (key_matches_binding(c, config.force_quit)) {
                 handle_quit(config, buffer, true);
-            } else if (in_command_input) {
+                return;
+            }
+            
+            if (in_command_input) {
                 // Handle command input
                 if (c == '\r' || c == '\n') {
                     in_command_input = false;

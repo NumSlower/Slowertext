@@ -14,7 +14,7 @@ syntax_highlighting = true        # Enable basic syntax highlighting for comment
 
 # Indentation and Formatting
 # ===========================
-tab_width = 7                     # Number of spaces to insert for tab key
+tab_width = 3                     # Number of spaces to insert for tab key
 auto_indent = true                # Automatically indent new lines to match previous line
 word_wrap = false                 # Enable word wrapping (not implemented)
 
@@ -44,7 +44,7 @@ default_encoding = utf-8          # Default text encoding (not implemented)
 line_endings = unix               # Line ending style: unix, windows, mac (not implemented)
 buffer_size = 64                  # Buffer size in KB (not implemented)
 refresh_rate = 16                 # Screen refresh rate in Hz (not implemented)
-debug_mode = false                # Enable debug messages and diagnostics
+debug_mode = true                 # Enable debug messages and diagnostics
 
 # File Management
 # ===============
@@ -66,8 +66,8 @@ default_mode = insert             # Mode to start in when editor opens
 #   - Function keys: f1, f2, etc. (not implemented)
 
 # Mode switching
-enter_insert = ctrl+i             # Switch to insert mode
-enter_command = esc           # Switch to command mode
+enter_insert = ctrl+j             # Switch to insert mode (changed from ctrl+i to avoid Tab conflict)
+enter_command = escape            # Switch to command mode
 
 # File operations
 save_file = ctrl+s                # Save current file
