@@ -1,0 +1,57 @@
+# SlowerText Configuration File
+# This file contains configuration settings for the SlowerText editor
+# Lines starting with # are comments
+# Format: key = value
+
+# Display Settings
+show_line_numbers = true
+show_tilde = true
+show_whitespace = false
+highlight_current_line = true
+syntax_highlighting = true
+
+# Indentation and Formatting
+tab_width = 7
+auto_indent = true
+word_wrap = false
+
+# Colors
+text_color = white
+background_color = black
+status_bar_color = cyan
+comment_color = green
+
+# Status Bar
+status_format = %f%modified - %m
+
+# Editor Behavior
+confirm_quit = true
+auto_save_interval = 0
+create_backups = false
+max_undo_levels = 100
+default_extension = txt
+default_encoding = utf-8
+line_endings = unix
+buffer_size = 64
+refresh_rate = 16
+debug_mode = false
+
+# File Settings
+show_hidden_files = false
+
+# Default Mode (insert or command)
+default_mode = insert
+
+# Key Bindings
+enter_insert = ctrl+i
+enter_command = escape
+save_file = ctrl+s
+quit_editor = ctrl+q
+force_quit = ctrl+f
+cursor_up = arrow_up
+cursor_down = arrow_down
+cursor_left = arrow_left
+cursor_right = arrow_right
+
+# Font (terminal dependent)
+font = monospace
