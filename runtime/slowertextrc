@@ -1,57 +1,85 @@
-# SlowerText Configuration File
+# SlowerText Editor Configuration File
+# ====================================
 # This file contains configuration settings for the SlowerText editor
-# Lines starting with # are comments
-# Format: key = value
+# Lines starting with # are comments and are ignored
+# Format: key = value (spaces around = are optional)
 
 # Display Settings
-show_line_numbers = true
-show_tilde = true
-show_whitespace = false
-highlight_current_line = true
-syntax_highlighting = true
+# ================
+show_line_numbers = true          # Show line numbers on the left side
+show_tilde = true                 # Show tilde (~) for lines beyond file content
+show_whitespace = false           # Show whitespace characters (not implemented)
+highlight_current_line = true     # Highlight the line where cursor is located
+syntax_highlighting = true        # Enable basic syntax highlighting for comments
 
 # Indentation and Formatting
-tab_width = 7
-auto_indent = true
-word_wrap = false
+# ===========================
+tab_width = 7                     # Number of spaces to insert for tab key
+auto_indent = true                # Automatically indent new lines to match previous line
+word_wrap = false                 # Enable word wrapping (not implemented)
 
-# Colors
-text_color = white
-background_color = black
-status_bar_color = cyan
-comment_color = green
+# Color Scheme
+# ============
+text_color = white                # Main text color
+background_color = black          # Background color
+status_bar_color = cyan           # Status bar background color
+comment_color = green             # Color for comment syntax highlighting
 
-# Status Bar
+# Status Bar Configuration
+# ========================
+# Available placeholders:
+#   %f = filename
+#   %modified = modification indicator (*)
+#   %m = current mode (INSERT/COMMAND)
 status_format = %f%modified - %m
 
 # Editor Behavior
-confirm_quit = true
-auto_save_interval = 0
-create_backups = false
-max_undo_levels = 100
-default_extension = txt
-default_encoding = utf-8
-line_endings = unix
-buffer_size = 64
-refresh_rate = 16
-debug_mode = false
+# ===============
+confirm_quit = true               # Confirm before quitting with unsaved changes
+auto_save_interval = 0            # Auto-save interval in seconds (0 = disabled)
+create_backups = false            # Create backup files when saving (not implemented)
+max_undo_levels = 100             # Maximum number of undo operations (not implemented)
+default_extension = txt           # Default file extension for new files
+default_encoding = utf-8          # Default text encoding (not implemented)
+line_endings = unix               # Line ending style: unix, windows, mac (not implemented)
+buffer_size = 64                  # Buffer size in KB (not implemented)
+refresh_rate = 16                 # Screen refresh rate in Hz (not implemented)
+debug_mode = false                # Enable debug messages and diagnostics
 
-# File Settings
-show_hidden_files = false
+# File Management
+# ===============
+show_hidden_files = false         # Show hidden files in file browser (not implemented)
 
-# Default Mode (insert or command)
-default_mode = insert
+# Default Editor Mode
+# ===================
+# Options: insert, command
+default_mode = insert             # Mode to start in when editor opens
 
 # Key Bindings
-enter_insert = ctrl+i
-enter_command = escape
-save_file = ctrl+s
-quit_editor = ctrl+q
-force_quit = ctrl+f
-cursor_up = arrow_up
-cursor_down = arrow_down
-cursor_left = arrow_left
-cursor_right = arrow_right
+# ============
+# Format: action = key_combination
+# Supported key formats:
+#   - Single characters: a, b, c, etc.
+#   - Control combinations: ctrl+s, ctrl+q, etc.
+#   - Special keys: escape, tab, enter, space
+#   - Arrow keys: arrow_up, arrow_down, arrow_left, arrow_right
+#   - Function keys: f1, f2, etc. (not implemented)
 
-# Font (terminal dependent)
-font = monospace
+# Mode switching
+enter_insert = ctrl+i             # Switch to insert mode
+enter_command = esc           # Switch to command mode
+
+# File operations
+save_file = ctrl+s                # Save current file
+quit_editor = ctrl+q              # Quit editor (with confirmation if modified)
+force_quit = ctrl+f               # Force quit without confirmation
+
+# Cursor movement (work in both modes)
+cursor_up = arrow_up               # Move cursor up
+cursor_down = arrow_down           # Move cursor down
+cursor_left = arrow_left           # Move cursor left
+cursor_right = arrow_right         # Move cursor right
+
+# Terminal Font (informational only - depends on terminal settings)
+# =================================================================
+font = monospace                   # Preferred monospace font

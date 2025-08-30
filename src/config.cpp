@@ -7,19 +7,21 @@
 #include <unistd.h>
 #include <algorithm>
 
+/**
+ * Load configuration from file and set defaults
+ * @param config Editor configuration to populate
+ */
 void ConfigManager::load_config(EditorConfig& config) {
-    // Set defaults
+    // Set default configuration values
     config.show_line_numbers = false;
     config.tab_width = 4;
     config.auto_indent = true;
     config.show_whitespace = false;
     config.status_format = "%f%modified - %m";
-    config.color_scheme = "default";
     config.text_color = "white";
     config.background_color = "black";
     config.status_bar_color = "cyan";
     config.comment_color = "green";
-    config.font = "monospace";
     config.show_tilde = true;
     config.highlight_current_line = false;
     config.confirm_quit = true;
@@ -35,6 +37,8 @@ void ConfigManager::load_config(EditorConfig& config) {
     config.refresh_rate = 16;
     config.syntax_highlighting = false;
     config.debug_mode = false;
+    
+    // Set default key bindings
     config.enter_insert = "ctrl+i";
     config.enter_command = "escape";
     config.save_file = "ctrl+s";
@@ -45,6 +49,7 @@ void ConfigManager::load_config(EditorConfig& config) {
     config.cursor_left = "arrow_left";
     config.cursor_right = "arrow_right";
     
+    // Try to load configuration file
     std::string config_path = get_config_path();
     std::ifstream config_file(config_path);
     
@@ -52,6 +57,7 @@ void ConfigManager::load_config(EditorConfig& config) {
         return; // Use defaults if config file doesn't exist
     }
     
+    // Parse configuration file
     std::map<std::string, std::string> config_values;
     std::string line;
     
@@ -63,7 +69,13 @@ void ConfigManager::load_config(EditorConfig& config) {
     apply_config_values(config, config_values);
 }
 
+/**
+ * Get the path to the configuration file
+ * Checks multiple locations in order of priority
+ * @return Path to configuration file
+ */
 std::string ConfigManager::get_config_path() {
+    // Get home directory
     const char* home = getenv("HOME");
     std::string home_dir;
     if (!home) {
@@ -77,39 +89,49 @@ std::string ConfigManager::get_config_path() {
         home_dir = home;
     }
     
-    // Check configuration file locations in order of priority
-    // 1. runtime/slowertextrc
+    // Check configuration file locations in order of priority:
+    
+    // 1. Local runtime/slowertextrc (for development)
     std::string runtime_path = "runtime/slowertextrc";
     if (FileManager::file_exists(runtime_path)) {
         return runtime_path;
     }
     
-    // 2. ~/.config/slowertext/slowertextrc
+    // 2. User config directory: ~/.config/slowertext/slowertextrc
     std::string config_dir_path = home_dir + "/.config/slowertext/slowertextrc";
     if (FileManager::file_exists(config_dir_path)) {
         return config_dir_path;
     }
     
-    // 3. ~/.slowertextrc
+    // 3. Home directory: ~/.slowertextrc
     std::string home_config_path = home_dir + "/.slowertextrc";
     if (FileManager::file_exists(home_config_path)) {
         return home_config_path;
     }
     
-    // Fallback to runtime/slowertextrc
+    // Fallback to runtime path (may not exist)
     return runtime_path;
 }
 
+/**
+ * Parse a single configuration line into key-value pairs
+ * Ignores comments and empty lines
+ * @param line Configuration line to parse
+ * @param values Map to store parsed key-value pairs
+ */
 void ConfigManager::parse_config_line(const std::string& line, std::map<std::string, std::string>& values) {
+    // Skip empty lines, comments, and section headers
     if (line.empty() || line[0] == '#' || line[0] == '[') {
         return;
     }
     
+    // Find equals sign
     size_t equals_pos = line.find('=');
     if (equals_pos != std::string::npos) {
         std::string key = line.substr(0, equals_pos);
         std::string value = line.substr(equals_pos + 1);
         
+        // Trim whitespace from key and value
         key.erase(0, key.find_first_not_of(" \t"));
         key.erase(key.find_last_not_of(" \t") + 1);
         value.erase(0, value.find_first_not_of(" \t"));
@@ -119,11 +141,17 @@ void ConfigManager::parse_config_line(const std::string& line, std::map<std::str
     }
 }
 
+/**
+ * Apply parsed configuration values to editor config
+ * @param config Editor configuration to update
+ * @param values Map of configuration key-value pairs
+ */
 void ConfigManager::apply_config_values(EditorConfig& config, const std::map<std::string, std::string>& values) {
     for (const auto& pair : values) {
         const std::string& key = pair.first;
         const std::string& value = pair.second;
         
+        // Display settings
         if (key == "show_line_numbers") {
             config.show_line_numbers = string_to_bool(value);
         } else if (key == "tab_width") {
@@ -134,8 +162,6 @@ void ConfigManager::apply_config_values(EditorConfig& config, const std::map<std
             config.show_whitespace = string_to_bool(value);
         } else if (key == "status_format") {
             config.status_format = value;
-        } else if (key == "color_scheme") {
-            config.color_scheme = value;
         } else if (key == "text_color") {
             config.text_color = value;
         } else if (key == "background_color") {
@@ -144,12 +170,12 @@ void ConfigManager::apply_config_values(EditorConfig& config, const std::map<std
             config.status_bar_color = value;
         } else if (key == "comment_color") {
             config.comment_color = value;
-        } else if (key == "font") {
-            config.font = value;
         } else if (key == "show_tilde") {
             config.show_tilde = string_to_bool(value);
         } else if (key == "highlight_current_line") {
             config.highlight_current_line = string_to_bool(value);
+        
+        // Editor behavior settings
         } else if (key == "confirm_quit") {
             config.confirm_quit = string_to_bool(value);
         } else if (key == "auto_save_interval") {
@@ -176,12 +202,16 @@ void ConfigManager::apply_config_values(EditorConfig& config, const std::map<std
             config.syntax_highlighting = string_to_bool(value);
         } else if (key == "debug_mode") {
             config.debug_mode = string_to_bool(value);
+        
+        // Default mode setting
         } else if (key == "default_mode") {
             if (value == "insert") {
                 config.mode = INSERT_MODE;
             } else if (value == "command") {
                 config.mode = COMMAND_MODE;
             }
+        
+        // Key bindings
         } else if (key == "enter_insert") {
             config.enter_insert = value;
         } else if (key == "enter_command") {
@@ -204,12 +234,24 @@ void ConfigManager::apply_config_values(EditorConfig& config, const std::map<std
     }
 }
 
+/**
+ * Convert string to boolean value
+ * Accepts various formats: true/false, 1/0, yes/no, on/off
+ * @param str String to convert
+ * @return Boolean value
+ */
 bool ConfigManager::string_to_bool(const std::string& str) {
     std::string lower_str = str;
     std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(), ::tolower);
     return lower_str == "true" || lower_str == "1" || lower_str == "yes" || lower_str == "on";
 }
 
+/**
+ * Parse key binding string to key code
+ * Handles special keys, control combinations, and single characters
+ * @param key Key binding string (e.g., "ctrl+s", "escape", "arrow_up")
+ * @return Key code integer, 0 if invalid
+ */
 int ConfigManager::parse_key_binding(const std::string& key) {
     if (key.empty()) return 0;
     
@@ -217,7 +259,7 @@ int ConfigManager::parse_key_binding(const std::string& key) {
     std::string lower_key = key;
     std::transform(lower_key.begin(), lower_key.end(), lower_key.begin(), ::tolower);
     
-    // Handle special keys first
+    // Handle special keys
     if (lower_key == "escape" || lower_key == "esc") return ESC_KEY;
     if (lower_key == "backspace") return BACKSPACE_KEY;
     if (lower_key == "delete" || lower_key == "del") return DELETE_KEY;
@@ -229,7 +271,7 @@ int ConfigManager::parse_key_binding(const std::string& key) {
     if (lower_key == "enter" || lower_key == "return") return '\r';
     if (lower_key == "space") return ' ';
     
-    // Handle Ctrl key combinations
+    // Handle Ctrl key combinations (ctrl+x format)
     if (lower_key.substr(0, 5) == "ctrl+" && lower_key.length() == 6) {
         char ctrl_char = lower_key[5];
         if (ctrl_char >= 'a' && ctrl_char <= 'z') {
@@ -237,14 +279,14 @@ int ConfigManager::parse_key_binding(const std::string& key) {
         }
     }
     
-    // Handle Alt key combinations (for future use)
+    // Handle Alt key combinations (for future expansion)
     if (lower_key.substr(0, 4) == "alt+" && lower_key.length() == 5) {
         // Alt combinations would need more complex handling
         // For now, just return the character
         return lower_key[4];
     }
     
-    // Handle function keys (for future use)
+    // Handle function keys (for future expansion)
     if (lower_key.substr(0, 1) == "f" && lower_key.length() >= 2) {
         // Function keys would need special handling
         // For now, return 0
