@@ -21,7 +21,7 @@ word_wrap = false                 # Enable word wrapping (not implemented)
 # Color Scheme
 # ============
 text_color = white                # Main text color
-background_color = black          # Background color
+background_color = white         # Background color
 status_bar_color = cyan           # Status bar background color
 comment_color = green             # Color for comment syntax highlighting
 
