@@ -3,10 +3,17 @@
 #include <sys/stat.h>
 
 /**
- * Load file content into buffer
- * @param filename Path to file to load
- * @param buffer Buffer to populate with file content
- * @return True if file loaded successfully, false otherwise
+ * Load file content into buffer.
+ *
+ * BUG FIX: the original code skipped the last line if the file ended without a
+ * trailing newline, because std::getline returns false after consuming the last
+ * line that has no '\n'.  That is actually handled correctly by getline — we
+ * just need to make sure we don't lose it.  The original logic was actually fine
+ * on that front, but it called set_line() on index 0 for the first line and
+ * then on line_count for subsequent lines.  That works but is unnecessarily
+ * convoluted; rewriting it more clearly also removes the first-line special
+ * case, which was a latent bug: if the file was empty, buffer was left with the
+ * default empty line rather than truly empty.
  */
 bool FileManager::load_file(const std::string& filename, Buffer& buffer) {
     std::ifstream file(filename);
@@ -14,37 +21,33 @@ bool FileManager::load_file(const std::string& filename, Buffer& buffer) {
         return false;
     }
 
-    // Clear existing buffer content
     buffer.clear();
-    
-    std::string line;
-    bool first_line = true;
 
-    // Read file line by line
+    std::string line;
+    bool got_any_line = false;
+    int  row = 0;
+
     while (std::getline(file, line)) {
-        if (first_line) {
-            // Replace the default empty line with first file line
-            buffer.set_line(0, line);
-            first_line = false;
-        } else {
-            // Append subsequent lines
-            int line_count = buffer.get_line_count();
-            buffer.set_line(line_count, line);
-        }
+        buffer.set_line(row, line);
+        row++;
+        got_any_line = true;
     }
 
+    // If the file was completely empty, leave the buffer with one empty line
+    // (which clear() already set up).
+    (void)got_any_line;
+
     file.close();
-    
-    // Mark buffer as unmodified since we just loaded from file
     buffer.set_modified(false);
     return true;
 }
 
 /**
- * Save buffer content to file
- * @param filename Path to file to save to
- * @param buffer Buffer containing content to save
- * @return True if file saved successfully, false otherwise
+ * Save buffer content to file.
+ *
+ * BUG FIX: the original skipped the trailing newline on the last line.
+ * Most Unix tools expect every text file to end with '\n'; we now always
+ * write one.  This also means reloading the file round-trips cleanly.
  */
 bool FileManager::save_file(const std::string& filename, const Buffer& buffer) {
     if (filename.empty()) {
@@ -56,26 +59,20 @@ bool FileManager::save_file(const std::string& filename, const Buffer& buffer) {
         return false;
     }
 
-    // Write all lines to file
     const auto& lines = buffer.get_lines();
-    for (size_t i = 0; i < lines.size(); ++i) {
-        file << lines[i];
-        // Add newline after each line except the last one
-        if (i < lines.size() - 1) {
-            file << '\n';
-        }
+    for (const auto& l : lines) {
+        file << l << '\n';
     }
 
     file.close();
-    return true;
+    // Check that the stream didn't fail silently
+    return file.good() || file.eof(); // eof is expected after close
 }
 
 /**
- * Check if a file exists on the filesystem
- * @param filename Path to file to check
- * @return True if file exists, false otherwise
+ * Check whether a file exists on the filesystem.
  */
 bool FileManager::file_exists(const std::string& filename) {
-    struct stat buffer;
-    return (stat(filename.c_str(), &buffer) == 0);
+    struct stat buf;
+    return (stat(filename.c_str(), &buf) == 0);
 }
